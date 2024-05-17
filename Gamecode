@@ -1,0 +1,1909 @@
+import pygame, math, random, os, sys,ctypes, re
+from sys import exit
+
+# Inizializzazione di pygame
+pygame.init()
+
+
+
+#Variabili di input sullo schermo:
+money = 10000000000
+
+#SUONI
+MAC_shoot = pygame.mixer.Sound("SOUNDS/MAC10.MP3")
+Pistol_shoot = pygame.mixer.Sound("SOUNDS/PISTOL.MP3")
+MAC_reload = pygame.mixer.Sound("SOUNDS/MAC10_RELOAD.MP3")
+Pistol_reload = pygame.mixer.Sound("SOUNDS/PISTOL_RELOAD.MP3")
+
+#COLORI
+WHITE = (255,255,255)
+RED = (255,0,0)
+GREEN = (0,255,0)
+BLUE = (0,0,255)
+BLACK = (0,0,0)
+DARKGREY = (169,169,169)
+YELLOWGREEN = (154,205,50)
+YELLOW = (255,255,0)
+
+# Variabili e funzioni
+current_tool = 0         #0 mani, 1 arma, 2 hacking device, 3 altri oggetti raccolti
+
+hands_active = False  
+gun_active = False
+hackD_active = False
+other_active = False        #slot inventario variabile
+facingL= True
+facingR = False 
+identificato=False
+FPS = 60
+#VARIABILI arma AR
+
+GITTATA_AR=350
+DANNO_AR=20
+AMMO_AR=10
+COOLDOWN_AR=17
+
+GITTATA_BER=200
+DANNO_BER=12
+AMMO_BER=25
+COOLDOWN_BER=9
+
+
+BULLET_SPEED=55
+BARREL_X=-5
+BARREL_Y=-8
+
+BLACK=BLACK = (0, 0, 0)
+WALL_HEIGHT=50
+WALL_WIDTH=2500
+
+
+#FONT TESTO
+Font_1 = pygame.font.SysFont("PressStart2P-Regular.ttf", 65)   #per il n munizioni
+
+
+#VARIABILI NPC 1
+
+NPC_COOLDOWN=20
+immagine_arma_NPC=pygame.image.load("AR.gif")
+DANNO_NPC=5
+GITTATA_NPC=600
+VELOCIT_PLAYER = 13
+BULLET_SPEED_NPC=20
+VELOCIT_NPC=4
+
+SCREEN_WIDTH = 1920         # misure schermo
+SCREEN_HEIGHT = 1080
+#schermo
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+posizione_x=1100    #posizioni giocatore
+posizione_y=SCREEN_HEIGHT//2
+immagine_personaggio=pygame.image.load("Player.gif")
+immagine_npc=pygame.image.load("Knight.png")
+immagine_AR=pygame.image.load("Pistola_Silenziata.gif")
+immagine_MITRA=pygame.image.load("Utzi.gif")
+immagine_sparo=pygame.image.load("sphere.png")
+immagine_bidello=pygame.image.load("Bidellone.png")
+immagine_bidello_ostaggio=pygame.image.load("Bidellone_Ostaggio.png")
+immagine_Tablet=pygame.image.load("Tablet.gif")
+immagine_borsa=pygame.image.load("Borsa.png")
+background0=pygame.transform.scale(pygame.image.load("Floors/Tetto_Banca.png"),(2500,2000))       #tetot
+background1=pygame.transform.scale(pygame.image.load("Floors/Banca_Interno_Oscuro.png"),(2500,2000))     #parte 1 banca    
+background2=pygame.transform.scale(pygame.image.load("Floors/Banca_Interno_Fase1.png"),(2500,2000))      #parte 2
+background3=pygame.transform.scale(pygame.image.load("Floors/Banca_Interno_Fase2.png"),(2500,2000))       #parte 3
+background4=pygame.transform.scale(pygame.image.load("Floors/Corridoio_Vault.png"),(2500,2000))
+background5=pygame.transform.scale(pygame.image.load("Floors/Vault.png"),(2500,2000))
+background6=pygame.transform.scale(pygame.image.load("Floors/Corridoio_Vault_parte2.png"),(2500,2000))
+background7=pygame.transform.scale(pygame.image.load("Floors/Tetto_Banca_Fase2.png"),(2500,2000))
+
+Level=0
+
+def hacking():
+    #variabili
+    #SCREEN_WIDTH = 800
+    #SCREEN_HEIGHT = 770
+
+
+    screen = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
+    pygame.display.set_caption("Hacking Simulation")
+
+
+    # Caratteri disponibili per la simulazione
+    characters = "!@#$%^&*()_+-=[]{}|;:,.<>?`~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+    # Impostazioni del testo
+    font = pygame.font.SysFont('Consolas', 18)
+    text_color = (0, 255, 0)  # Colore verde per il testo
+
+    # Variabili per la posizione del testo
+    x = 0
+    y = 0
+
+    # Variabili per il controllo della posizione del testo
+    line_spacing = font.get_linesize()
+    max_line_length = SCREEN_WIDTH - x  # Lunghezza massima della riga
+    current_line_length = 0
+    wrap_threshold = (random.randint(100,1000))/1000  # Percentuale della larghezza massima per andare a capo
+
+
+    # Ciclo di gioco
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+        
+        # Generazione di caratteri casuali
+        char = random.choice(characters)
+
+        # Rende il testo usando il font
+        text_surface = font.render(char, True, text_color)
+
+        # Aggiunge il testo allo schermo
+        screen.blit(text_surface, (x, y))
+
+        # Aggiorna la posizione del testo
+        x += text_surface.get_width()
+
+        # Controlla se il testo ha raggiunto il margine destro dello schermo
+        if x >= max_line_length * wrap_threshold:
+            x = 10  # Reimposta la posizione sull'asse x
+            y += line_spacing  # Passa alla riga successiva
+            wrap_threshold = (random.randint(200,1000))/1000 #aggiorno la nuova lunghezza (random), per far sembare il tutto più naturale
+
+        if y > 750:
+            break
+        # Aggiorna lo schermo
+        pygame.display.flip()
+
+        # Aggiungi un ritardo per rallentare la velocità di scrittura
+        pygame.time.delay(1)  # Ritardo di 50 millisecondi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def hitbox_collide(sprite1, sprite2):
+    return sprite1.rect.colliderect(sprite2.rect)
+
+
+
+
+npc_group=pygame.sprite.Group()  
+sprites_group=pygame.sprite.Group()
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self,posizione_x,posizione_y):
+        super().__init__()
+        self.pos=pygame.math.Vector2(posizione_x, posizione_y)
+        self.image = pygame.transform.scale(immagine_personaggio, (125, 100))
+        self.rect = self.image.get_rect(center=self.pos)
+        
+        self.player_rect=self.image.get_rect(center=self.pos)
+        self.vel = VELOCIT_PLAYER
+        self.health= 100
+        self.arma=False
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+
+
+    def comandi(self):
+        
+        self.velocity_x = 0
+        self.velocity_y = 0
+
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_w]:
+            self.velocity_y = -self.vel
+        if keys[pygame.K_s]:
+            self.velocity_y = self.vel
+        if keys[pygame.K_d]:
+            self.velocity_x = self.vel
+        if keys[pygame.K_a]:
+            self.velocity_x = -self.vel
+            
+        if self.velocity_x != 0 and self.velocity_y != 0: # moving diagonally
+            self.velocity_x /= math.sqrt(2)
+            self.velocity_y /= math.sqrt(2)
+
+    
+    def move(self):
+        self.player_rect.centerx += self.velocity_x
+        self.check_collision("horizontal")
+
+        self.player_rect.centery += self.velocity_y
+        self.check_collision("vertical")
+
+        self.rect.center = self.player_rect.center
+
+        self.pos=self.rect.center
+        
+        # Aggiorna la posizione dell'arma se attiva
+        if Ar.active:  
+            Ar.pos = self.pos  
+            Ar.rect.center = self.player_rect.center
+            self.arma=True
+        if Beretta.active:  
+            Beretta.pos = self.pos  
+            Beretta.rect.center = self.player_rect.center
+            self.arma=True
+        
+        if Hacking_device.active:  
+            Hacking_device.pos = self.pos  
+            Hacking_device.rect.center = self.player_rect.center
+
+        if Borsa.active:  
+            Borsa.pos = self.pos  
+            Borsa.rect.center = self.player_rect.center
+
+    def check_collision(self, direction):
+        for sprite in obstacles_group:
+                if sprite.rect.colliderect(self.player_rect):
+                    if direction == "horizontal":
+                        if self.velocity_x > 0:
+                            self.player_rect.right = sprite.rect.left
+                        if self.velocity_x < 0:
+                            self.player_rect.left = sprite.rect.right
+                    
+                    if direction == "vertical":
+                        if self.velocity_y < 0:
+                            self.player_rect.top = sprite.rect.bottom
+                        if self.velocity_y > 0:
+                            self.player_rect.bottom = sprite.rect.top
+        
+       
+    def alive(self):
+        if self.health <= 0:
+            None
+           
+            #self.kill()
+
+
+    def update(self):
+        self.comandi()
+        self.move()
+        self.alive()
+    
+
+class Guardia(pygame.sprite.Sprite):
+    def __init__(self, position, health):
+        super().__init__(npc_group, sprites_group)
+        self.image = pygame.transform.scale(immagine_npc, (200, 200))
+        self.rect = self.image.get_rect()
+        self.pos = position
+        self.position = pygame.math.Vector2(position)
+        self.rect.center = position
+        self.vel = VELOCIT_NPC
+        self.health = health
+        self.direction = pygame.math.Vector2()
+        self.vel = pygame.math.Vector2()
+        self.veloc = VELOCIT_NPC
+        self.identificato = identificato
+        self.arma = None  # Aggiunta: per tenere traccia dello stato dell'arma dell'NPCd
+        self.armabool=False
+    
+    def hunt(self):
+        player_vect = pygame.math.Vector2(player.rect.center)
+        npc_vector = pygame.math.Vector2(self.rect.center)
+        distance = self.get_vect_distance(player_vect, npc_vector)
+
+
+        if distance > 0 and distance < 400 :
+            self.direction = (player_vect - npc_vector).normalize()
+            self.identificato = True
+            if self.arma is None:  # Se l'NPC non ha già un'arma, crea un'arma
+                self.arma = enemy_Gun(NPC_COOLDOWN, immagine_arma_NPC, GITTATA_NPC, DANNO_NPC, self.rect.centerx, self.rect.centery)
+                self.armabool=True
+                enemy_guns_group.add(self.arma)
+            self.arma.rect.center = self.rect.center
+
+            if self.arma.shoot_cooldown == 0:
+                self.angle = math.degrees(math.atan2(self.direction.y, self.direction.x))
+                self.arma.shooting(self.angle)
+
+        else:
+            if self.identificato == True and distance>0:
+                self.direction = (player_vect - npc_vector).normalize()
+                self.arma.rect.center = self.rect.center
+            else:
+                self.direction = pygame.math.Vector2()
+
+        self.vel = self.direction * self.veloc
+        self.position += self.vel
+        self.rect.centerx = self.position.x
+        self.rect.centery = self.position.y
+
+    def get_vect_distance(self, vector1, vector2):
+        return (vector1 - vector2).magnitude()
+
+    def alive(self):
+        if self.health <= 0:
+            self.kill()
+            if self.armabool==True:
+                self.arma.kill()
+            
+    def update(self):
+        self.alive()
+        self.hunt()
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, position, health):
+        super().__init__(npc_group, sprites_group)
+        self.image = pygame.transform.scale(immagine_npc, (200, 200))
+        self.rect = self.image.get_rect()
+        self.pos = position
+        self.position = pygame.math.Vector2(position)
+        self.rect.center = position
+        self.vel = VELOCIT_NPC
+        self.health = health
+        self.direction = pygame.math.Vector2()
+        self.vel = pygame.math.Vector2()
+        self.veloc = VELOCIT_NPC
+        self.identificato = identificato
+        self.arma = None  # Aggiunta: per tenere traccia dello stato dell'arma dell'NPCd
+        self.armabool=False
+    
+    def hunt(self):
+        player_vect = pygame.math.Vector2(player.rect.center)
+        npc_vector = pygame.math.Vector2(self.rect.center)
+        distance = self.get_vect_distance(player_vect, npc_vector)
+
+
+        if distance > 0 and distance < 400 :
+            self.direction = (player_vect - npc_vector).normalize()
+            self.identificato = True
+            if self.arma is None:  # Se l'NPC non ha già un'arma, crea un'arma
+                self.arma = enemy_Gun(NPC_COOLDOWN, immagine_arma_NPC, GITTATA_NPC, DANNO_NPC, self.rect.centerx, self.rect.centery)
+                self.armabool=True
+                enemy_guns_group.add(self.arma)
+            self.arma.rect.center = self.rect.center
+
+            if self.arma.shoot_cooldown == 0:
+                self.angle = math.degrees(math.atan2(self.direction.y, self.direction.x))
+                self.arma.shooting(self.angle)
+
+        else:
+            if self.identificato == True and distance>0:
+                self.direction = (player_vect - npc_vector).normalize()
+                self.arma.rect.center = self.rect.center
+            else:
+                self.direction = pygame.math.Vector2()
+
+        self.vel = self.direction * self.veloc
+        self.position += self.vel
+        self.rect.centerx = self.position.x
+        self.rect.centery = self.position.y
+
+    def get_vect_distance(self, vector1, vector2):
+        return (vector1 - vector2).magnitude()
+
+    def alive(self):
+        if self.health <= 0:
+            self.kill()
+            if self.armabool==True:
+                self.arma.kill()
+            
+    def update(self):
+        self.alive()
+        self.hunt()
+
+class Guns(pygame.sprite.Sprite):
+    def __init__(self,ammo,cooldown,immagine,gittata,danno,gr_x,gr_y):
+        super().__init__()
+        
+        self.active=False
+        self.pos=pygame.math.Vector2(posizione_x, posizione_y)
+
+        self.immagine=immagine
+        self.image = pygame.transform.scale(self.immagine, (gr_x,gr_y))  # Imposta l'immagine attiva come visibile all'inizio
+        
+
+        self.gittata=gittata
+        self.danno=danno
+        self.speed=BULLET_SPEED
+
+
+        self.rect = self.image.get_rect(center=(posizione_x,posizione_y))
+        self.base_player_image=self.image
+        self.hitbox_rect=self.base_player_image.get_rect(center=self.pos )
+        self.vel = VELOCIT_PLAYER
+        self.shoot=False
+        self.cooldown=cooldown
+        self.shoot_cooldown=0
+        self.barrel=pygame.math.Vector2(BARREL_X,BARREL_Y)
+        self.NoflipImage = self.image
+        self.ammo=ammo
+        self.start_ammo = ammo
+        self.carica=False
+        self.angle = 0
+    
+    def draw(self, player_pos, camera_offset):
+        if self.active:  # Disegna l'arma solo se è attiva
+            self.rect.center = player_pos[0] - camera_offset[0], player_pos[1] - camera_offset[1]
+            screen.blit(self.image, self.rect)
+            self.player_pos=player_pos
+
+    def comandi(self):
+        keys = pygame.key.get_pressed()
+    
+        # Gestione del tasto di ricarica (ad esempio, il tasto R)
+        if keys[pygame.K_r]:
+            if Ar.active:
+                if not Ar.shoot and Ar.ammo < Ar.start_ammo:
+                    Ar.ammo = Ar.start_ammo
+                    #suono ricarica
+           
+                    Pistol_reload.play()
+           
+            if Beretta.active:    
+                if not Beretta.shoot and Beretta.ammo < Beretta.start_ammo:
+                    MAC_reload.play()
+                    Beretta.ammo = Beretta.start_ammo
+
+        if (pygame.mouse.get_pressed()==(1,0,0) or keys[pygame.K_SPACE]) and self.active:
+            self.shoot=True
+            self.shooting()
+
+        else:
+            self.shoot=False
+
+
+
+    def activate(self):
+        self.active=True
+        #self.image=pygame.transform.scale(self.immagine, (80,45)) # Non serve più, l'immagine è già visibile
+        self.rect = self.image.get_rect(center=self.pos)
+        self.pos=player.pos 
+        player.arma=True
+    
+    def deactivate(self):
+        self.active=False
+        #self.image=pygame.transform.scale(self.immagine, (0,0)) # Non serve più, l'immagine non è più visibile
+        self.rect = pygame.Rect(0, 0, 0, 0)  # Imposta la dimensione della hitbox a 0, in modo che l'arma non interagisca con le collisioni       
+        player.arma=False
+
+
+
+    def gun_rotation(self):
+        self.mouse_coords = pygame.mouse.get_pos()
+        self.x_change_mouse_player = self.mouse_coords[0] - SCREEN_WIDTH // 2
+        self.y_change_mouse_player = self.mouse_coords[1] - SCREEN_HEIGHT // 2
+        self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
+
+        if self.angle < 0:
+            self.angle += 360  # Trasformo l'angolo negativo in positivo
+
+            
+        if 90 < self.angle < 270:
+            self.image = pygame.transform.flip(self.base_player_image, False, True)  # Capovolgo l'arma se punta verso sinistra
+        else:
+                
+            self.image = self.base_player_image
+        self.image = pygame.transform.rotate(self.image, -self.angle)
+        self.rect = self.image.get_rect(center=self.hitbox_rect.center)
+    
+    def shooting(self):
+        if self.shoot_cooldown == 0 and self.ammo > 0 and not self.carica:
+        # Calcola la posizione della bocca dell'arma rispetto al centro del giocatore
+            spawn_bullet = self.rect.center + pygame.math.Vector2(self.barrel).rotate(-self.angle)
+
+
+            #suono
+            if current_tool==1:
+                Pistol_shoot.play()
+            if current_tool==2:
+                MAC_shoot.play()
+
+            # Crea il proiettile nella posizione della bocca dell'arma
+            self.bullet = Bullet(spawn_bullet[0], spawn_bullet[1], self.angle, self.gittata, self.danno, self.ammo, self.speed)
+
+            self.shoot_cooldown = self.cooldown
+            bullets_group.add(self.bullet)
+            sprites_group.add(self.bullet)
+            self.ammo -= 1
+
+        if self.carica:
+            self.ammo = self.start_ammo
+            self.carica = False
+
+
+
+    def update(self):
+        self.comandi()    
+        self.gun_rotation()
+        self.hitbox_rect.center = self.rect.center
+        if self.shoot_cooldown>0:
+            self.shoot_cooldown-=1
+
+
+class enemy_Gun(pygame.sprite.Sprite):
+    def __init__(self, cooldown, immagine, gittata, danno, x, y):
+        super().__init__()
+        
+        self.x = x
+        self.y = y
+        self.npc_position = pygame.math.Vector2(self.x,self.y)
+
+        self.carica=True
+        self.immagine = immagine
+        self.image = pygame.transform.scale(self.immagine, (140, 100))
+
+        self.ammo=40
+        self.start_ammo=40
+        self.gittata = gittata
+        self.danno = danno
+        self.cooldown = cooldown
+        self.speed=BULLET_SPEED_NPC
+
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+        self.base_player_image = self.image
+        self.hitbox_rect = self.base_player_image.get_rect(center=(self.x,self.y))
+        self.shoot = False
+        
+        self.shoot_cooldown = 0
+        self.barrel = pygame.math.Vector2(BARREL_X, BARREL_Y)
+        self.NoflipImage = self.image
+        self.angle = 0  # Aggiunta: definisci l'attributo angle
+    
+
+
+        
+        
+    
+    def get_vect_distance(self,vector1,vector2):
+        return(vector1-vector2).magnitude()
+        
+
+    def gun_rotation(self):
+        # Calcola il vettore tra l'NPC e il giocatore
+        player_vector = pygame.math.Vector2(player.rect.center)
+        npc_vector = pygame.math.Vector2(self.rect.center)
+        direction_vector = player_vector - npc_vector
+        
+        # Calcola l'angolo tra l'NPC e il giocatore
+        self.angle = math.degrees(math.atan2(direction_vector.y, direction_vector.x))
+        
+        # Aggiorna l'immagine dell'arma in base all'angolo
+        if self.angle < 0:
+            self.angle += 360  # Trasforma l'angolo negativo in positivo
+
+        if 90 < self.angle < 270:
+            self.image = pygame.transform.flip(self.base_player_image, False, True)  # Capovolgi l'arma se punta verso sinistra
+        else:
+            self.image = self.base_player_image
+
+        # Ruota l'arma
+        self.image = pygame.transform.rotate(self.image, -self.angle)
+        self.rect = self.image.get_rect(center=self.hitbox_rect.center)
+
+
+        
+    
+    def shooting(self, angle):
+        self.angle = angle  # Assegna l'angolo all'attributo angle
+
+        if self.shoot_cooldown == 0:
+            # Calcola la posizione attuale dell'arma NPC
+            npc_position = pygame.math.Vector2(self.rect.center)
+
+            # Calcola la coordinata di spawn del proiettile all'estremità dell'arma dell'NPC
+            spawn_bullet = npc_position + self.barrel.rotate(self.angle)
+            self.bullet = Bullet(spawn_bullet[0], spawn_bullet[1], self.angle, self.gittata, self.danno, self.ammo, self.speed)
+            self.shoot_cooldown = self.cooldown
+            bullets_enemy_group.add(self.bullet)
+            sprites_group.add(self.bullet)
+            self.ammo -= 1
+
+        if self.carica == True:
+            self.ammo = self.start_ammo
+
+        # Aggiorna la posizione dell'arma rispetto all'NPC
+        self.npc_position = pygame.math.Vector2(self.rect.center)
+
+    def update(self):
+        self.shooting(self.angle)
+        self.gun_rotation()
+        self.npc_position = pygame.math.Vector2(self.rect.center)
+        if self.shoot_cooldown>0:
+            self.shoot_cooldown-=1
+
+        
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self,x,y,angle,gittata,damage,ammo,speed):
+        super().__init__()
+        self.image=pygame.transform.scale(immagine_sparo, (7, 7))
+        self.image=pygame.transform.rotozoom(self.image,0,1.4)
+        self.rect=self.image.get_rect(center=(x,y))
+        self.x=x
+        self.y=y
+        self.speed = speed
+        self.angle = angle
+        self.x_vel = math.cos(self.angle*(2*math.pi/360))*self.speed
+        self.y_vel = math.sin(self.angle*(2*math.pi/360))*self.speed
+        self.gittata = gittata
+        self.ammo  = ammo
+        self.start_ammo = ammo
+        self.spawn_time = pygame.time.get_ticks()
+        self.damage = damage
+    
+    
+    def bullet_collisions(self): 
+        hits_npc = pygame.sprite.groupcollide(npc_group, bullets_group, False, True, hitbox_collide)
+
+        for hit in hits_npc:
+            hit.health -= self.damage
+            
+        #if pygame.sprite.spritecollide(self, obstacles_group, False): # wall collisions
+           # self.kill()
+
+        hits_player = pygame.sprite.groupcollide(player_group, bullets_enemy_group, False, True, hitbox_collide)
+
+        for hit in hits_player:
+            hit.health -= self.damage
+
+        for obstacle in obstacles_group:
+            if self.rect.colliderect(obstacle.rect):
+                self.kill()
+
+    def move(self):
+        self.x+=self.x_vel
+        self.y+=self.y_vel
+
+        self.rect.x=int(self.x)
+        self.rect.y=int(self.y)
+    
+
+        if pygame.time.get_ticks()-self.spawn_time > self.gittata:
+            self.kill()
+        
+
+    def update(self):
+        self.move()
+        self.bullet_collisions()
+
+obstacles_group=pygame.sprite.Group()
+
+obstacles2_group=pygame.sprite.Sprite()
+obstacles3_group=pygame.sprite.Sprite()
+obstacles4_group=pygame.sprite.Group()
+
+
+class Obstaclesmap4(pygame.sprite.Sprite):
+    def __init__(self,posizione,width,height):
+        super().__init__()
+        self.pos=posizione
+        self.width=width
+        self.height=height
+    
+    def update(self,Level):
+        if Level==4:
+            self.image = pygame.Surface((self.width,self.height))
+            self.image.fill(BLACK)  # Colore dell'ostacolo
+            self.rect = self.image.get_rect(topleft=self.pos)
+            self.add(obstacles2_group)
+            
+        else:
+            obstacles_group.remove(obstacles2_group)
+            self.kill()
+
+class Obstaclesmap2(pygame.sprite.Sprite):
+    def __init__(self,posizione,width,height):
+        super().__init__()
+        self.pos=posizione
+        self.width=width
+        self.height=height
+
+    def update(self,Level):
+        if Level==2:
+            self.image = pygame.Surface((self.width,self.height))
+            self.image.fill(BLACK)  # Colore dell'ostacolo
+            self.rect = self.image.get_rect(topleft=self.pos)
+            self.add(obstacles_group)
+        else:
+            self.remove(obstacles_group)
+            self.kill()    
+        
+
+
+class NPC(pygame.sprite.Sprite):
+    def __init__(self,immagine,position,seconda_immagine):
+        super().__init__()
+        self.image=pygame.transform.scale(immagine, (150, 150))
+        self.rect = self.image.get_rect()
+        self.pos = position
+        self.position = pygame.math.Vector2(position)
+        self.rect.center = position
+        self.active=False
+        self.image2=seconda_immagine
+
+    def comandi(self):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_e]:
+            self.active=True
+        else:
+            self.active=False
+
+    def cambio_immagine(self):
+        player_position = pygame.math.Vector2(player.rect.center)
+        npc_position = pygame.math.Vector2(self.rect.center)
+        distance = player_position.distance_to(npc_position)
+        if distance<400 and self.active==True and player.arma==True:
+            self.image=pygame.transform.scale(self.image2, (150, 150))
+      
+
+    def update(self):
+        self.comandi()
+        self.cambio_immagine()
+
+class Camera(pygame.sprite.Group):
+    def __init__(self):
+        super().__init__()
+        self.offset= pygame.math.Vector2()
+        self.ground_rect = background0.get_rect(topleft = (0,0))
+    
+    def custom_draw(self):
+        self.offset.x = player.rect.centerx - SCREEN_WIDTH //2
+        self.offset.y = player.rect.centery - SCREEN_HEIGHT //2
+
+        ground_offset_pos = self.ground_rect.topleft - self.offset
+
+                              #LIVELLI
+
+        if Level <= 0:
+            screen.blit(background0, ground_offset_pos)        #tetto
+        if Level == 1:
+            screen.blit(background1, ground_offset_pos)     #banca oscuro totalmente
+        if Level == 2:
+            screen.blit(background2, ground_offset_pos)   #banca con cafeteria aperta
+        if Level == 3: 
+            screen.blit(background3, ground_offset_pos) #banca full aperta
+        if Level == 4:
+            screen.blit(background4, ground_offset_pos)      #corridoio vault
+        if Level == 5:
+            screen.blit(background5, ground_offset_pos)      #vault
+        if Level == 6:
+            screen.blit(background6, ground_offset_pos)     #corridoio buio
+        if Level == 7:
+            screen.blit(background7, ground_offset_pos)    #tetto con la full sparatoria
+
+        
+
+        for sprite in player_group:
+            offset_pos = sprite.rect.topleft - self.offset
+            screen.blit(sprite.image, offset_pos)
+        
+        for npc in npc_group:
+            offset_pos = npc.rect.topleft - self.offset
+            screen.blit(npc.image, offset_pos)
+        
+
+        if Level==2:
+            for enemy in enemy_group:
+                offset_pos = enemy.rect.topleft - self.offset
+                screen.blit(enemy.image, offset_pos)
+
+        if Level==1:
+            for guardia in guardie_group:
+                offset_pos = guardia.rect.topleft - self.offset
+                screen.blit(guardia.image, offset_pos)
+        
+
+
+        for wall in obstacles_group:
+                
+            offset_pos = wall.rect.topleft - self.offset                                         
+            screen.blit(wall.image, offset_pos) 
+            
+
+        for gun in guns_group:
+            
+            if gun.active==True and gun.pos==player.pos:
+                offset_pos = gun.rect.topleft - self.offset 
+                screen.blit(gun.image, offset_pos)
+
+        for bullet in bullets_group:
+            offset_pos = bullet.rect.topleft - self.offset
+            screen.blit(bullet.image, offset_pos)
+        
+        for bullets in bullets_enemy_group:
+            offset_pos = bullets.rect.topleft - self.offset
+            screen.blit(bullets.image, offset_pos)
+        
+        for guns in enemy_guns_group:
+            offset_pos = guns.rect.topleft - self.offset
+            screen.blit(guns.image, offset_pos)
+
+        
+        if Level==1 or Level==2 or Level==3:
+
+            for npc in bidello_group:
+                offset_pos = npc.rect.topleft - self.offset
+                screen.blit(npc.image, offset_pos)
+
+        if Hacking_device.active:
+            offset_pos = Hacking_device.rect.topleft - self.offset 
+            screen.blit(Hacking_device.image, offset_pos)
+        
+        if Borsa.active:
+            offset_pos = Borsa.rect.topleft - self.offset 
+            screen.blit(Borsa.image, offset_pos)
+
+
+
+bidello=NPC(immagine_bidello, (2300,1650),immagine_bidello_ostaggio)
+guardia=Guardia((2280,500),1)
+police2=Enemy((300,300),100)
+Beretta=Guns(AMMO_BER,COOLDOWN_BER, immagine_MITRA,GITTATA_BER,DANNO_BER,120,75)
+Ar= Guns(AMMO_AR,COOLDOWN_AR, immagine_AR,GITTATA_AR, DANNO_AR,135,85)
+Hacking_device=Guns(0,0, immagine_Tablet,0, 0,100,100)
+Borsa=Guns(0,0, immagine_borsa,0, 0,100,100)
+camera= Camera()
+player=Player(posizione_x,posizione_y)
+
+#muri
+muri_map4 = [
+
+Obstaclesmap4((0,0),2500,230),
+Obstaclesmap4((1500,0),1000,270),
+Obstaclesmap4((0,420),380,155),
+Obstaclesmap4((570,420),380,155),
+Obstaclesmap4((950,0),50,575),
+Obstaclesmap4((1500,0),50,575),
+Obstaclesmap4((2000,0),50,780),
+Obstaclesmap4((1550,1020),950,200),
+Obstaclesmap4((2500,0),50,2000),
+Obstaclesmap4((0,2000),2500,50),
+Obstaclesmap4((0,0),50,2000),
+Obstaclesmap4((1500,800),50,720),
+Obstaclesmap4((1500,1700),50,300),
+Obstaclesmap4((950,800),50,1200),
+Obstaclesmap4((0,1020),1000,30),
+Obstaclesmap4((1660,1400),220,80),
+Obstaclesmap4((2160,1400),220,80),
+Obstaclesmap4((1660,1840),220,80),
+Obstaclesmap4((2160,1840),220,80),
+Obstaclesmap4((2180,400),180,45),
+Obstaclesmap4((2280,1600),50,100)
+
+]
+
+muri_map2 = [
+Obstaclesmap2((0,0),2500,230),
+Obstaclesmap2((1500,0),1000,270),
+Obstaclesmap2((0,420),380,155),
+Obstaclesmap2((570,420),380,155),
+Obstaclesmap2((950,0),50,575),
+Obstaclesmap2((1500,0),50,575),
+Obstaclesmap2((2000,0),50,780),
+Obstaclesmap2((1550,1020),950,200),
+Obstaclesmap2((2500,0),50,2000),
+Obstaclesmap2((0,2000),2500,50),
+Obstaclesmap2((0,0),50,2000),
+Obstaclesmap2((1500,800),50,720),
+Obstaclesmap2((1500,1700),50,300),
+Obstaclesmap2((950,800),50,1200),
+Obstaclesmap2((0,1020),1000,30),
+Obstaclesmap2((1660,1400),220,80),
+Obstaclesmap2((2160,1400),220,80),
+Obstaclesmap2((1660,1840),220,80),
+Obstaclesmap2((2160,1840),220,80),
+Obstaclesmap2((2180,400),180,45),
+Obstaclesmap2((2280,1600),50,100)
+
+]
+
+
+
+enemy_guns_group=pygame.sprite.Group()
+enemy_group=pygame.sprite.Group()
+sprites_group=pygame.sprite.Group()
+guns_group=pygame.sprite.Group()
+bullets_group=pygame.sprite.Group()
+bullets_enemy_group=pygame.sprite.Group()
+player_group=pygame.sprite.Group()
+bidello_group=pygame.sprite.Group()
+guardie_group=pygame.sprite.Group()
+
+bidello_group.add(bidello)
+guardie_group.add(guardia)
+
+enemy_group.add(police2)
+sprites_group.add(player)
+player_group.add(player)
+guns_group.add(Ar)
+guns_group.add(Beretta)
+guns_group.add(Hacking_device)
+guns_group.add(Borsa)
+
+def check_switch():
+    global current_tool, Ar, Beretta
+    if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 4:  # Scorrimento verso l'alto
+                current_tool += 1
+            elif event.button == 5:  # Scorrimento verso il basso
+                current_tool -= 1
+    
+    if current_tool < 0:
+        current_tool = 3
+    if current_tool > 3:
+        current_tool = 0 
+    
+    if current_tool==1:
+        Ar.activate()
+        Beretta.deactivate()
+        Hacking_device.deactivate()
+        Borsa.deactivate()
+    
+    if current_tool==2:
+        Ar.deactivate()
+        Beretta.activate()
+        Hacking_device.deactivate()
+        Borsa.deactivate()
+    
+    if current_tool==3:
+        Ar.deactivate()
+        Beretta.deactivate()
+        Hacking_device.activate()
+        Borsa.deactivate()
+    
+    if current_tool==0:
+        Ar.deactivate()
+        Beretta.deactivate()
+        Hacking_device.deactivate()
+        Borsa.activate()
+
+
+
+
+def show_ammo():
+
+    Ar_ammo = Font_1.render(str(Ar.ammo), True, WHITE)
+    Beretta_ammo = Font_1.render(str(Beretta.ammo), True, WHITE)
+
+    if current_tool == 1:
+        screen.blit(Ar_ammo, (500, 500))
+    if current_tool == 2:
+        screen.blit(Beretta_ammo, (500, 500))
+
+
+def show_HB():          #healthbar
+
+    HB_red = (200,200, 400, 27)                               #sfondo healthbar (non è più rosso ma non ho voglia di cambiare il nome)
+    HB_green = (200,200, int(player.health)*4, 27)        #lunghezza healtbar
+ 
+    pygame.draw.rect(screen, BLACK, HB_red )
+    if player.health > 80:
+        pygame.draw.rect(screen, GREEN, HB_green )
+    elif player.health > 60:
+        pygame.draw.rect(screen, YELLOWGREEN, HB_green )
+    elif player.health > 40:
+        pygame.draw.rect(screen, YELLOW, HB_green )
+    elif player.health > 0:
+        pygame.draw.rect(screen, RED, HB_green )
+
+
+def show_money():
+    global money
+
+    #meccanismo per mettere i punti al numero di soldi
+
+    money2 = "{:,}".format(money)
+    
+
+    #chiamo la nuova variabile money money2 perché sennò si bugga
+
+    money2 = money2 + "€"
+
+    #printo il numero di soldi
+    
+    Nmoney = Font_1.render(str(money2), True, GREEN)    #numero di soldi
+    if current_tool == 0:
+        screen.blit(Nmoney, (400, 400))
+
+
+
+
+
+
+
+
+#altri comandi
+clock = pygame.time.Clock()    #definisco un orologio, che sarà utile per calcolare lassi di tempo senza interrompere niente
+angle2 = 0
+
+
+# Impostazioni dello schermo
+
+
+pygame.display.set_caption("Bank Robbery")
+
+vel=10
+
+                                                                    # Ciclo di gioco
+
+
+Level = 0
+Hacking=0
+
+Bank=True
+
+
+while True:
+
+
+
+    #LIVELLO 1
+
+    while Bank and Level <= 0:
+        
+
+        
+
+        keys = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if keys[pygame.K_h]:
+                Hacking+=1
+                Bank=False
+                print(Bank,Hacking)
+                break
+            if keys[pygame.K_k]:
+                Level+=1
+                Bank=True
+                print(Bank,Hacking)
+                break
+            if keys[pygame.K_l]:
+                Level-=1
+                Bank=True
+                print(Bank,Hacking)
+                break
+
+            check_switch()
+        
+        
+        if current_tool < 0:
+            current_tool = 3
+        if current_tool > 3:
+            current_tool = 0 
+        if current_tool==1:
+            Ar.activate()
+            Beretta.deactivate()
+        if current_tool==2:
+            Ar.deactivate()
+            Beretta.activate()
+        if current_tool==3 or current_tool==0:
+            Ar.deactivate()
+            Beretta.deactivate()
+
+
+        for npc in npc_group:
+            if npc.arma is not None:  # Se l'NPC ha un'arma, aggiungilo al gruppo dei sprites
+                sprites_group.add(npc.arma)
+            else:
+                sprites_group.remove(npc.arma)  # Altrimenti, rimuovi l'arma dal gruppo dei sprites
+        
+        screen.fill((0,0,0))
+        camera.custom_draw()
+        guns_group.update()
+        sprites_group.update() 
+        guardie_group.update()
+        enemy_group.update()
+        bidello_group.update()
+        obstacles2_group.update()
+        obstacles4_group.update()
+        show_money()
+        show_ammo()
+        show_HB()
+        # Aggiornamento dello schermo
+        pygame.display.flip()
+
+
+        #60FPS
+        clock.tick(FPS)
+
+
+    #LIVELLO 2
+
+    while Bank and Level >= 1:
+
+        
+
+        keys = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if keys[pygame.K_h]:
+                Hacking+=1
+                Bank=False
+                print(Bank,Hacking)
+                break
+            if keys[pygame.K_k]:
+                Level+=1
+                Bank=True
+                print(Bank,Hacking)
+                break
+            if keys[pygame.K_l]:
+                Level-=1
+                Bank=True
+                print(Bank,Hacking)
+                break
+                
+
+            check_switch()
+        
+        
+        if current_tool < 0:
+            current_tool = 3
+        if current_tool > 3:
+            current_tool = 0 
+        if current_tool==1:
+            Ar.activate()
+            Beretta.deactivate()
+        if current_tool==2:
+            Ar.deactivate()
+            Beretta.activate()
+        if current_tool==3 or current_tool==0:
+            Ar.deactivate()
+            Beretta.deactivate()
+
+
+        for npc in npc_group:
+            if npc.arma is not None:  # Se l'NPC ha un'arma, aggiungilo al gruppo dei sprites
+                sprites_group.add(npc.arma)
+            else:
+                sprites_group.remove(npc.arma)  # Altrimenti, rimuovi l'arma dal gruppo dei sprites
+        
+        screen.fill((0,0,0))
+        camera.custom_draw()
+        guns_group.update()
+        sprites_group.update() 
+        enemy_group.update()
+        bidello_group.update()
+        obstacles2_group.update(Level)
+        obstacles4_group.update(Level)
+        show_money()
+        show_ammo()
+        show_HB()
+        # Aggiornamento dello schermo
+        pygame.display.flip()
+
+
+        #60FPS
+        clock.tick(FPS)
+
+    if Hacking == 1 and not Bank:
+        hacking()
+        #variabili
+        click = False
+        currentRecty= 1
+        GREEN = (0, 255, 0)
+        FPS = 240
+        slowness = 10
+        rect1Move = (30-slowness)//(FPS/60)
+        rect2Move = (40-slowness)//(FPS/60)
+        rect3Move = (45-slowness)//(FPS/60) 
+        rect4Move = (55-slowness)//(FPS/60) 
+        WIDTH= 1920
+        HEIGHT = 1080
+
+                                                        #centro schermoY = 390
+        rect1Y = 200
+        rect2Y = 500
+        rect3Y = 800
+        rect4Y = 0
+
+        rect1Done = False
+        rect2Done = False
+        rect3Done = False 
+        rect4Done = False
+
+        #rettangoli
+        rect1 = pygame.Rect(400, rect1Y, 100, 80)               
+        rect2 = pygame.Rect(800, rect2Y, 100, 80)
+        rect3 = pygame.Rect(1200, rect3Y, 100, 80)
+        rect4 = pygame.Rect(1600, rect4Y, 100, 80)
+
+        #barra
+        bar = pygame.Rect(0, HEIGHT//2-20, 2000, 8)
+
+
+
+
+
+
+
+        #altri comandi 
+        screen = pygame.display.set_mode((WIDTH,HEIGHT))
+        pygame.display.set_caption('Hacking') #attribuisco un nome alla finestra di gioco
+        clock = pygame.time.Clock()    #definisco un orologio, che sarà utile per calcolare lassi di tempo senza interrompere niente
+
+        test_surface = pygame.image.load("hacking.jpg")
+
+        run = True
+        while run:
+            for event in pygame.event.get():     #scannerizza tutti gli eventi che stanno avvenendo in pygame
+                if event.type == pygame.QUIT:   #QUIT è collegato al toccare la "x" rossa in altro a destra delle finestre
+                    run = False 
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:           #tasto sinistro mouse
+                        click = True
+                
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        click = True
+
+        #controllo se i rettangoli toccano la barra
+            if click == True:
+                if rect1.colliderect(bar) and currentRecty == 1:
+                    currentRecty += 1
+                elif rect2.colliderect(bar) and currentRecty == 2:
+                    currentRecty += 1
+                elif rect3.colliderect(bar) and currentRecty == 3:
+                    currentRecty += 1
+                elif rect4.colliderect(bar) and currentRecty == 4:
+                    currentRecty += 1
+                else: 
+                    Bank=True
+                    Hacking=0
+                    break
+                
+
+
+
+            if currentRecty <2:
+                rect1Y += rect1Move
+                if rect1Y > 1000:
+                    rect1Move *= -1
+                if rect1Y < 0:
+                    rect1Move *= -1
+
+            if currentRecty < 3:
+                rect2Y += rect2Move
+                if rect2Y > 1000:
+                    rect2Move *= -1
+                if rect2Y < 0:
+                    rect2Move *= -1
+
+            if currentRecty < 4:
+                rect3Y += rect3Move
+                if rect3Y > 1000:
+                    rect3Move *= -1
+                if rect3Y < 0:
+                    rect3Move *= -1
+
+            if currentRecty < 5:
+                rect4Y += rect4Move
+                if rect4Y > 1000:
+                    rect4Move *= -1
+                if rect4Y < 0:
+                    rect4Move *= -1
+            
+            
+
+                
+            if currentRecty == 5:
+                Bank=True
+                break
+
+
+            rect1.center =(400, rect1Y)
+            rect2.center =(800, rect2Y)
+            rect3.center =(1200, rect3Y)
+            rect4.center = (1600, rect4Y)
+
+            screen.blit(test_surface,(0,0))    #blit: Block Image Transfer --> metto una superficie su un altra   #metto 200 e 100 per centrare l'oggetto
+            pygame.draw.rect(screen, GREEN, rect1)
+            pygame.draw.rect(screen, GREEN, rect2)
+            pygame.draw.rect(screen, GREEN, rect3)
+            pygame.draw.rect(screen, GREEN, rect4)
+            pygame.draw.rect(screen,GREEN,bar)
+
+
+
+            click = False
+            pygame.display.update()
+            clock.tick(FPS)
+
+    if Hacking == 2 and not Bank:
+        hacking()
+
+        for n in range(2):
+            movegridX = 405
+            movegridY = 240
+            click= False
+            blocks = []
+            WHITE = (255,255,255)
+            RED = (255,0,0)
+            BLUE = (0,0,255)
+            GREEN = (0,255,0)
+            CYAN = (0,255,255)
+            clock = pygame.time.Clock() 
+            len_combinazione = 5 + n         #lugnhezza della combinazione  
+
+            beep_sound = pygame.mixer.Sound("buttonclick.WAV") 
+            win_sound = pygame.mixer.Sound("WIN.mp3") 
+            lose_sound = pygame.mixer.Sound("LOSE.mp3")
+
+            currentIncognita= 0  #numero incognito della combinazione corrente, usato per far scorrere in modo graduale la posizione che viene proposta dall'utente
+
+            combinazione = []
+            combinazioneInserita = []
+
+
+            #schermo
+            SCREEN_WIDTH = 1920
+            SCREEN_HEIGHT = 1080
+            screen = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
+            pygame.display.set_caption("Hacking memory game")
+            surfaceA = pygame.image.load("hacking2.png")
+            screen.blit(surfaceA,(0,0))
+
+
+            
+            #def createblock(w,h,block):
+            """
+            for x in range(1, 31):
+                y = (x // 6) * 10  # Aggiorna y ogni volta che x raggiunge un multiplo di 6
+                if x > 6:
+                    x -= 6 * (x // 6)  # Ripristina x a 1 quando x raggiunge un multiplo di 6
+                block = pygame.Rect(x*10,y,75,75)
+                blocks. append(block)
+            """   
+            #Creo la griglia:
+            for row in range(5):
+                for col in range(6):
+                    x = col * 125  # 150 è la larghezza di ogni blocco (75) moltiplicata per 2 per lasciare spazio tra i blocchi
+                    y = row * 125  # 150 è l'altezza di ogni blocco (75) moltiplicata per 2 per lasciare spazio tra i blocchi
+                    block = pygame.Rect(x, y, 70, 70)
+                    blocks.append(block)
+                
+            #Creo la combinazione:
+            while len_combinazione > len(combinazione):
+                for event in pygame.event.get():     #scannerizza tutti gli eventi che stanno avvenendo in pygame
+                    if event.type == pygame.QUIT:   #QUIT è collegato al toccare la "x" rossa in altro a destra delle finestre
+                        pygame.quit()
+                        exit()
+
+                n = (random.randint(0,29))
+                if n not in combinazione:
+                    combinazione.append(n)
+
+            print (combinazione)    
+            
+            #mostro la combinazione
+            for block in blocks:
+                    moved_block = block.move(movegridX, movegridY)
+                    pygame.draw.rect(screen, WHITE, moved_block)
+                    pygame.display.update()
+            pygame.time.delay(2000)
+
+            for n in combinazione:
+                moved_block = blocks[n].move(movegridX, movegridY)
+                pygame.draw.rect(screen, CYAN, moved_block )
+                pygame.display.update()
+                pygame.time.delay(1000)
+                
+
+            pygame.time.delay(1000)
+
+
+            run = True
+            while run:
+                #creo un rettangolo che è il mouse (1x1pixel)
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                mouse_x -= movegridX
+                mouse_y -= movegridY
+                mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1) 
+
+
+                for event in pygame.event.get():     #scannerizza tutti gli eventi che stanno avvenendo in pygame
+                    if event.type == pygame.QUIT:   #QUIT è collegato al toccare la "x" rossa in altro a destra delle finestre
+                        run = False
+                        pygame.quit()
+                        exit() 
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:           #tasto sinistro mouse
+                            click = True
+
+                
+                
+                
+
+                screen.blit(surfaceA,(0,0))
+                #screen.fill((0,0,0))
+
+                for block in blocks:
+                    moved_block = block.move(movegridX, movegridY)
+                    pygame.draw.rect(screen, WHITE, moved_block)
+
+                    if click:
+                        if block.colliderect(mouse_rect):       #controllo collisione
+                            for _ in range(len_combinazione):
+                                if currentIncognita == _ and blocks.index(block) not in combinazioneInserita:  #faccio in modo che non si possa cliccare un tasto + di una volta
+                                    combinazioneInserita.append(blocks.index(block))
+                                    currentIncognita += 1
+                                    beep_sound.play()
+                                    break
+                
+
+                if len(combinazioneInserita) > 0:   
+                    for n in combinazioneInserita:   #prendo i vari numeri di combinazioneInserita(posizioni dei blocchi nella lista blocks)     
+                        moved_block = blocks[n].move(movegridX, movegridY)     #prendo il blocco assegnato all'inidice della combinazione e lo reindirizzo come ho fatto con la griglia
+                        pygame.draw.rect(screen, RED, moved_block )    #lo disegno IN ROSSO, in modo tale da capire che lo ho toccato
+
+
+
+                click = False
+                if currentIncognita >= len_combinazione:
+                    run = False
+                
+                pygame.display.update()
+                clock.tick(60)
+
+            #se MI interessa l'ordine in cui si sono lluminati i rettangoli
+            if combinazioneInserita == combinazione:
+                win_sound.play()
+                
+                
+            else: 
+                lose_sound.play()
+                Bank=True
+                Hacking=1
+                break
+
+
+            #uscita figa se si vince
+            if combinazioneInserita == combinazione:
+                for _ in range (3):
+                    for block in blocks:
+                        moved_block = block.move(movegridX, movegridY)
+                        pygame.draw.rect(screen, GREEN, moved_block)
+                        pygame.display.update()
+
+                    pygame.time.delay(600)
+
+                    for block in blocks:
+                        moved_block = block.move(movegridX, movegridY)
+                        pygame.draw.rect(screen, WHITE, moved_block)
+                        pygame.display.update()
+                    
+                    pygame.time.delay(150)
+
+            #uscita figa se si perde
+            else:
+                for block in blocks:
+                            moved_block = block.move(movegridX, movegridY)
+                            pygame.draw.rect(screen, RED, moved_block)
+                            pygame.display.update()
+                pygame.time.delay(4000)
+                Hacking == 0
+
+            Bank=True
+            break
+
+
+
+    if Hacking == 3 and not Bank:
+        hacking()
+
+
+                    #parole che possono uscire
+        words = ["secure", "money", "banking", "password", "access", "wallet", "secret",
+        "finance", "deposit", "credit", "savings", "banker", "account", "invest",
+        "wealthy", "private", "passcode", "security", "cashflow", "bankrupt",
+        "checkmate", "treasury", "fortress", "monetary", "vaulted", "exchange", "encrypted",
+        "swindle", "limitless", "withdraw", "depositor", "prosper", "counterfeit", "overdraft",
+        "fraudulent", "stockpile", "liquidate", "reserves", "foreclosure",
+        "insolvency", "laundering", "forfeit", "corruption", "breach",
+        "heist", "ransom", "plunder", "swindler", "hoard", "disguise",
+        "forgery", "wealth", "privacy", "defense", "thief", "embezzle", "ransack",
+        "ransomware", "malware", "bribery", "conspiracy", "holdup", "capitulate", "fleeced",
+        "fraud", "banknote", "bandit", "grift", "lucrative", "contraband", 
+        "larceny", "trespass", "sabotage", "tamper", "violation", "skimming"]
+
+        words_written = []   #lo uso semplicemente per evitare doppie nel programma
+        word_countdown = 0    #ogni volta che arriva a tot, faccio scrivere una parola
+        words_rects= []
+        words_coords_x = []         #lista di coordinate per ogni parola, mi servirà per riscriverle quando si evidenziano
+        words_coords_y = []
+        countdown_lenght = random.randint(60,80)   # il contatore perché venga printata una parola non è rigido, per fare in modo che le parole si distribuiscano meglio
+        write = True
+        timer = 0
+        click = False
+        lettere_indovinate = 0
+        tentativi = 6
+
+
+        # Impostazioni dello schermo
+        colonna2 = False      # dice su quale colonna scrivere i caratteri, se false, si scriveranno sulla prima, se true, sulla seconda (quella più a destra)
+        SCREEN_WIDTH = 1920
+        SCREEN_HEIGHT = 1080
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Hacking Simulation")
+
+        # Caratteri disponibili per la simulazione
+        characters = "!@#$%^&*()_+-=[]{}|;:,.<>?`~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+        # Impostazioni del testo
+        font = pygame.font.SysFont('Consolas', 20)
+        Text_font = pygame.font.SysFont("PressStart2P-Regular.ttf", 65)   #per il terminal e il titolo
+        RED = (255,0,0)
+        GREEN = (0,255,0)
+        WHITE = (255,255,255)
+        BLACK = (0,0,0)
+        text_color = (0, 189, 0)  # Colore verde per il testo
+
+        # Variabili per la posizione del testo
+        x = 10
+        y = 100
+
+        # Variabili per il controllo della posizione del testo
+        line_spacing = font.get_linesize() *3.5     #prendi lo spazio tra una riga e l'altra usando pygame
+        max_line_length = SCREEN_WIDTH - x  # Lunghezza massima della riga         
+        current_line_length = 0
+        wrap_threshold = (random.randint(300,350))/1000  # Percentuale della larghezza massima per andare a capo   
+
+        #Srivo il nome del programma di hacking
+
+        Title = ("PASSWORD CRACKER V2")
+        TERMINAL = ("TERMINAL:")
+        screen.blit(Text_font.render(Title, False, RED), (600, 0))
+
+
+        while True:
+            
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1)
+
+            word_countdown += 1
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+
+            #CONTROLLO SE ANDARE ALLA PROSSIMA COLONNA / RIGA
+
+            if y < 900 and colonna2 == False:
+                if x >= max_line_length * wrap_threshold:
+                    x = 10  # Reimposta la posizione sull'asse x
+                    y += line_spacing  # Passa alla riga successiva
+                    wrap_threshold = (random.randint(300,350))/1000 #aggiorno la nuova lunghezza (random), per far sembare il tutto più naturale
+            elif colonna2 == False:
+                y = 100             #do già le prime coordinate per la prima riga di testo
+                x = 1000 
+                colonna2 = True                         #tutta questa cosa è per far passare la scrittura alla colonna successiva
+            
+            if colonna2:
+                wrap_threshold = (random.randint(800,900))/1000
+                if x >= max_line_length * wrap_threshold:
+                    x = 1000  # Reimposta la posizione sull'asse x
+                    y += line_spacing  # Passa alla riga successiva
+                if y > 900:
+                    break
+
+            
+
+            # GENERO I CARATTERI CASUALI/PAROLE CASUALI
+            if word_countdown % countdown_lenght == 0:                     
+                chosen_word = random.choice(words)
+                char = chosen_word.upper()                    #il carattere che verrà disegnato sarà una parola (maiuscola, ecco perche upper())
+                words.remove(chosen_word)                          #elimino la parola dalla lista per evitare doppei
+                countdown_lenght = random.randint(40,60)
+                #creo un rettangolo sulla parola
+                rect = pygame.Rect(x,y,11* len(chosen_word), 20)       #prendo il rettangolo della parola per poi poterla selezionare (faccio variare la x in base alla lung della parola)
+                words_rects.append(rect)
+                                                                #pygame.draw.rect(screen, WHITE, rect)          #Disegno il rettangolo sotto la parola
+                words_written.append(chosen_word)
+                words_coords_x.append(x)
+                words_coords_y.append(y)
+
+            else:
+                char = random.choice(characters)
+
+            # Rende il testo usando il font
+            text_surface = font.render(char, True, text_color)
+
+
+
+
+            # Aggiunge il testo allo schermo
+
+            screen.blit(text_surface, (x, y))
+            
+            # Aggiorna la posizione del testo
+            x += text_surface.get_width()
+
+        
+
+            # Aggiorna lo schermo
+            pygame.display.flip()
+
+            # Aggiungi un ritardo per rallentare la velocità di scrittura
+            pygame.time.delay(3)  # Ritardo di 50 millisecondi
+
+
+        chosen_rect = random.choice(words_rects)        #rettangolo che bisogna clickare se si vuole vincere (rettangolo invisibile dietro alla parola giusta)
+        chosen_word = words_written[words_rects.index(chosen_rect)]  #ora la variabile chosen word diventerà la parola da indovinare
+        print(chosen_word)
+        
+        pygame.draw.rect(screen, BLACK,(4,920,40, 40))            #metto un rettangolo nero per coprire il carattere in più in fondo alla riga
+
+        screen.blit(Text_font.render(TERMINAL, True, RED), (4, 920)) #metto la parola TERMINAL sullo schermo
+
+        while True:
+
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1)
+
+            word_countdown += 1
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:           #tasto sinistro mouse
+                            click = True
+
+
+
+            for n in range (len(words_written)):
+                if mouse_rect.colliderect(words_rects[n]):
+                    pygame.draw.rect(screen, WHITE, words_rects[n])
+                    text_surface = font.render(words_written[n].upper(), True, text_color)
+                    screen.blit(text_surface, (words_coords_x[n], words_coords_y[n]))
+                    
+                else:
+                        pygame.draw.rect(screen, BLACK, words_rects[n])
+                        text_surface = font.render(words_written[n].upper(), True, text_color)
+                        screen.blit(text_surface, (words_coords_x[n], words_coords_y[n]))
+
+
+            if click == True:
+                    for rect in words_rects:
+                        if mouse_rect.colliderect(rect):
+                            clicked_rect = rect                 #definisco il rettangolo che è stato clickato
+                            clicked_word = words_written[words_rects.index(clicked_rect)]     #definisco la parola cliccata
+
+                            if clicked_rect == chosen_rect:
+                                pygame.draw.rect(screen, BLACK,(7,960,600, 200)) 
+
+                                testo_terminal_3 = "word correct"
+                                testo_terminal_4 = "...entering in the system..."
+                                screen.blit(font.render(testo_terminal_3, True, RED), (8, 970))
+                                pygame.display.update()
+                                pygame.time.delay(1000) 
+
+                                screen.blit(font.render(testo_terminal_4, True, RED), (8, 1000))
+            
+            
+                            else:
+                                tentativi -= 1
+                                if tentativi == 0:
+                                    break
+                                lettere_indovinate = 0
+                                for letter in chosen_word:
+                                    if letter in clicked_word:
+                                        lettere_indovinate += 1
+                                        clicked_word = re.sub(letter, '', clicked_word)  # Assegna il risultato di re.sub() a clicked_word   #rimuovo la lettera indovinata dalla stringa selezionata per evitare bug
+
+                                print("lettere indovinate: ",lettere_indovinate)
+
+                                                                    #RESETTO IL MESSAGGIO DEL TERMINALE QUANDO è PRESENTE UNO NUOVO
+
+                                pygame.draw.rect(screen, BLACK,(7,960,600, 200)) 
+
+                                                        #faccio scrivere le lettere indovinate e i tentativi rimasti (se la parola non è stata indovinata)
+        
+                                if clicked_word != chosen_word:
+                                    testo_terminal_1 = "word not correct (" + str(lettere_indovinate) + "/" + str(len(chosen_word)) +" correct)"
+                                    screen.blit(font.render(testo_terminal_1, True, RED), (8, 970))
+
+
+                                    testo_terminal_2 = "..remaining attempts: " + str(tentativi)
+                                    screen.blit(font.render(testo_terminal_2, True, RED), (8, 1000))
+
+                                    
+
+
+            if tentativi == 0:
+                Bank=True
+                Hacking=2
+                break
+
+            # Aggiorna lo schermo
+            pygame.display.flip()
+            click = False
+                    
+    if Hacking == 4 and not Bank:
+
+        hacking()
+
+        WHITE=(255,255,255)
+        RED = (255,0,0)
+        SCREEN_WIDTH = 1920
+        SCREEN_HEIGHT = 1080
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        surfaceA = pygame.image.load("Hacking_backround.png")
+        surfaceA = pygame.transform.scale(surfaceA, (1920, 1080))
+        screen.blit(surfaceA,(0,0))
+        pygame.display.set_caption("Hacking Simulation")
+
+        #variabili griglia
+        slideX = 340
+        slideY = 118
+        blocks_size = 119
+        blocks_distance = 139
+
+        #variabili per il gioco
+        correct_rects = []
+        fake_rects = []
+        clicked_blocks = []
+        lose = False
+        win = False
+
+        #selezionatore del blocco (ti dice su quale blocco sei)
+        selezionatore = pygame.image.load("FINGERPRINTS/Selezionatore.PNG")
+        selezionatore_rect = selezionatore.get_rect()
+
+
+        #creo le due colonne
+
+        blocks = []
+
+        for row in range(1,5):           #4 righe
+            for col in range(1,3):         #2 colonne
+                xR = col * blocks_distance + slideX # 150 è la larghezza di ogni blocco (75) moltiplicata per 2 per lasciare spazio tra i blocchi
+                yR = row * blocks_distance + slideY # 150 è l'altezza di ogni blocco (75) moltiplicata per 2 per lasciare spazio tra i blocchi
+                block = pygame.Rect(xR, yR, 1* blocks_size, 1*blocks_size)
+                blocks.append(block)
+                pygame.draw.rect(screen, WHITE, block)
+
+
+
+
+            
+
+        for x in range(1,5):
+
+            #mostro ogni volta un impronta diversa
+
+            if lose == True:
+                break
+            clicked_blocks = []
+
+            #seleziono i blocchi giusti e sbagliati
+            correct_rects= []
+            fake_rects=[]
+
+            while len(correct_rects) < 4:
+                block = random.choice(blocks)
+                if block not in correct_rects:
+                    correct_rects.append(block)
+
+            while len(fake_rects)< 4:
+                block = random.choice(blocks)
+                if block not in correct_rects and block not in fake_rects:
+                    fake_rects.append(block)
+
+            #definisco e entro nei vari file per prenderci poi le immagini
+
+
+            file_name = f"FINGERPRINTS/{x}"
+            surfaceA = pygame.image.load(f"FINGERPRINTS/{x}/Hacking.PNG")
+            fingerprint_images = []
+            fingerprint_images_fake = []
+
+            for n in range(1,5):
+                block_image = f"FINGERPRINTS/{x}/Parte {n}.PNG "        #assegno le immagini giuste ai blocchi giusti
+                fingerprint_image = pygame.image.load(block_image)
+                fingerprint_images.append(fingerprint_image)
+
+            for n in range(1,5):
+                block_image = f"FINGERPRINTS/{x}/Parte {n} fake.PNG"    #stessa cosa per quelli sbagliati
+                fingerprint_image = pygame.image.load(block_image)
+                fingerprint_images_fake.append(fingerprint_image)
+
+
+            
+            pygame.display.update()
+
+
+
+            while True:
+                lose = False
+                win = False
+                click = False
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1) 
+                for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                exit()
+
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                if event.button == 1:
+                                    click = True
+
+
+                #metto il selezionatore se il mouse è sopra un blocco
+                for block in blocks:
+                    if mouse_rect.colliderect(block):
+                            screen.blit(selezionatore, block)
+
+                if click and len(clicked_blocks) != 5:
+                    for block in blocks:
+                            if mouse_rect.colliderect(block) and block not in clicked_blocks:      #permetto di cliccare i blocchi una volta
+                                clicked_blocks.append(block)
+
+                if len(clicked_blocks) == 4:
+                    for n in clicked_blocks:
+                            if n not in correct_rects:
+                                lose = True
+
+                                #ritorniamo al main loop subito
+                                Bank=True
+                                break
+                            else:
+                                win = True
+                                
+                
+                screen.blit(surfaceA,(360,72))
+
+                for clicked_block in clicked_blocks:
+                    pygame.draw.rect(screen, WHITE, clicked_block)
+
+
+                for n in range (4):
+                    screen.blit(fingerprint_images[n], correct_rects[n])    #si mette prima l'immagine e poi il rettangolo
+
+                for n in range (4):
+                    screen.blit(fingerprint_images_fake[n], fake_rects[n])
+
+                for block in blocks:
+                    if mouse_rect.colliderect(block):
+                            screen.blit(selezionatore, block)
+
+                for clicked_block in clicked_blocks:
+                    screen.blit(selezionatore, clicked_block)
+
+                if lose == True:
+                    print("hai perso")
+                    Hacking=3
+                    Bank=True
+                    break
+                elif win == True:
+                    print("hai vinto")
+                    Bank=True
+                    break     
+                pygame.display.update()
+    
+    if Hacking > 4:
+        Hacking = 0
